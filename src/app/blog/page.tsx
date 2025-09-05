@@ -4,22 +4,22 @@ import SmoothScrollNavigation from "@/components/smooth-scroll-navigation";
 import SoulfulFooter from "@/components/soulful-footer";
 
 export default async function BlogPage() {
-  // Define base URL (works in dev + prod)
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
   // Fetch blogs
   const res = await fetch(new URL("/api/admin/blogs?limit=7", baseUrl), {
-    cache: "no-store", // always fresh data
+    cache: "no-store",
   });
 
   if (!res.ok) {
     throw new Error("Failed to fetch blogs");
   }
 
-  const { data } = await res.json();
+  // ✅ Only parse once
+  const { blogs } = await res.json();
 
   // First one is featured, rest are normal
-  const [featured, ...rest] = data;
+  const [featured, ...rest] = blogs || [];
 
   return (
     <div className="min-h-screen bg-background">

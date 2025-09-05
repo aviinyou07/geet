@@ -6,6 +6,14 @@ import { Blog } from "../types";
 import BlogTable from "../components/BlogTable";
 import Pagination from "../components/Pagination";
 
+interface BlogsApiResponse {
+  blogs: Blog[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+
 export default function BlogsPage() {
   const router = useRouter();
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -21,22 +29,33 @@ export default function BlogsPage() {
     fetchBlogs(currentPage, search);
   }, [currentPage, search]);
 
-  const fetchBlogs = async (page = 1, query = "") => {
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/admin/blogs?search=${encodeURIComponent(query)}&page=${page}&limit=5`);
-      if (!res.ok) throw new Error("Failed to fetch blogs");
+ const fetchBlogs = async (page = 1, query = "") => {
+  try {
+    setLoading(true);
+    setError(null);
 
-      const { data, pagination } = await res.json();
-      setBlogs(data);
-      setTotalPages(pagination.totalPages);
-      setCurrentPage(pagination.page);
-    } catch {
-      setError("Failed to fetch blogs");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const res: Response = await fetch(
+      `/api/admin/blogs?search=${encodeURIComponent(query)}&page=${page}&limit=5`
+    );
+    if (!res.ok) throw new Error("Failed to fetch blogs");
+
+    const {
+      blogs,
+      total,
+      page: responsePage,
+      limit,
+    }: BlogsApiResponse = await res.json();
+
+    setBlogs(blogs);
+    setTotalPages(Math.ceil(total / limit));
+    setCurrentPage(responsePage);
+  } catch {
+    setError("Failed to fetch blogs");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this blog?")) return;

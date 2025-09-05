@@ -9,11 +9,17 @@ export const config = {
 export async function middleware(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
 
+  // Allow login page
   if (req.nextUrl.pathname.startsWith("/admin/login")) return NextResponse.next();
+
   if (!token) return NextResponse.redirect(new URL("/admin/login", req.url));
 
-  const payload = await verifyToken(token);
-  if (!payload || payload.role !== "ADMIN") return NextResponse.redirect(new URL("/admin/login", req.url));
+ const payload = await verifyToken(token);
+
+if (!payload || payload.role !== "ADMIN") {
+  return NextResponse.redirect(new URL("/admin/login", req.url));
+}
+
 
   return NextResponse.next();
 }

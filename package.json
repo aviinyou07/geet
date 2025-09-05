@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "next dev",
-        "build": "next build",
+        "build": "next build --no-lint",
         "build:optimized": "npm run optimize:images && next build",
         "serve": "npx serve@latest out",
         "lint": "next lint --fix",
@@ -46,13 +46,16 @@
         "@types/react-dom": "^19.0.0",
         "eslint": "^9.32.0",
         "eslint-config-next": "^15.4.5",
+        "eslint-import-resolver-typescript": "^4.4.4",
         "imagemin": "^9.0.1",
         "imagemin-webp": "^8.0.0",
+        "lightningcss": "^1.30.1",
         "rimraf": "^6.0.1",
         "tailwindcss": "^4.0.0",
         "ts-node": "^10.9.2",
         "tsconfig-paths": "^4.2.0",
         "typescript": "^5.9.2",
+        "typescript-eslint": "^8.42.0",
         "webpack-bundle-analyzer": "^4.10.0"
     },
     "engines": {

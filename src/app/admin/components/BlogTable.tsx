@@ -26,31 +26,62 @@ export default function BlogTable({ blogs, onEdit, onDelete }: BlogTableProps) {
           </tr>
         </thead>
         <tbody>
-          {blogs.map(blog => (
+          {blogs.map((blog) => (
             <tr key={blog.id} className="hover:bg-gray-50 transition-colors">
               <td className="border px-4 py-2 font-medium">{blog.title}</td>
-              <td className="border px-4 py-2">{blog.author}</td>
+
+              {/* ✅ Render author object */}
+              <td className="border px-4 py-2">
+                {blog.author ? (
+                  <>
+                    <span className="font-medium">{blog.author.name}</span>
+                    {blog.author.email && (
+                      <span className="text-gray-500 text-sm"> ({blog.author.email})</span>
+                    )}
+                  </>
+                ) : (
+                  "Unknown"
+                )}
+              </td>
+
               <td className="border px-4 py-2">{blog.status || "draft"}</td>
               <td className="border px-4 py-2">{blog.category || "-"}</td>
               <td className="border px-4 py-2">{blog.tags?.join(", ") || "-"}</td>
               <td className="border px-4 py-2">{blog.featured ? "Yes" : "No"}</td>
               <td className="border px-4 py-2">
-                {blog.publishDate ? new Date(blog.publishDate).toLocaleDateString() : "-"}
+                {blog.publishDate
+                  ? new Date(blog.publishDate).toLocaleDateString()
+                  : "-"}
               </td>
               <td className="border px-4 py-2">
                 {blog.attachments?.length ? (
                   <div className="flex space-x-2">
                     {blog.attachments.map((url, idx) =>
                       url.endsWith(".pdf") ? (
-                        <a key={idx} href={url} target="_blank" className="text-blue-500 underline">
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          className="text-blue-500 underline"
+                        >
                           PDF
                         </a>
                       ) : url.endsWith(".mp4") ? (
-                        <a key={idx} href={url} target="_blank" className="text-green-500 underline">
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          className="text-green-500 underline"
+                        >
                           Video
                         </a>
                       ) : (
-                        <img key={idx} src={url} alt="Attachment" className="w-12 h-12 object-cover rounded" />
+                        <img
+                          key={idx}
+                          src={url}
+                          alt="Attachment"
+                          className="w-12 h-12 object-cover rounded"
+                        />
                       )
                     )}
                   </div>

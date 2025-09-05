@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
 
-// GET single blog
+// ✅ GET single blog
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
     const blog = await prisma.blog.findUnique({
@@ -10,14 +10,18 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       include: { author: true },
     });
 
-    if (!blog) return new Response("Not found", { status: 404 });
+    if (!blog) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     return NextResponse.json(blog);
   } catch (err) {
-    console.error(err);
-    return new Response("Failed to fetch blog", { status: 500 });
+    console.error("❌ Failed to fetch blog:", err);
+    return NextResponse.json({ error: "Failed to fetch blog" }, { status: 500 });
   }
 }
-// UPDATE blog
+
+// ✅ UPDATE blog
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const { id } = params;
   const data = await req.json();
@@ -26,24 +30,27 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const updatedBlog = await prisma.blog.update({
       where: { id },
       data: {
-        ...(data.title && { title: data.title }),
-        ...(data.slug && { slug: data.slug }),
-        ...(data.content && { content: data.content }),
-        ...(data.excerpt && { excerpt: data.excerpt }),
-        ...(data.image && { image: data.image }),
-        ...(data.publishDate && { publishDate: new Date(data.publishDate) }),
-        ...(data.status && { status: data.status }),
-        ...(data.category && { category: data.category }),
-        ...(data.tags && { tags: data.tags }),
-        ...(data.featured !== undefined && { featured: data.featured }),
-        ...(data.metaTitle && { metaTitle: data.metaTitle }),
-        ...(data.metaDescription && { metaDescription: data.metaDescription }),
-        ...(data.keywords && { keywords: data.keywords }),
-        ...(data.attachments && { attachments: data.attachments }),
-        ...(data.authorId && { author: { connect: { id: data.authorId } } }),
+        ...(data.title ? { title: data.title } : {}),
+        ...(data.slug ? { slug: data.slug } : {}),
+        ...(data.content ? { content: data.content } : {}),
+        ...(data.excerpt ? { excerpt: data.excerpt } : {}),
+        ...(data.image ? { image: data.image } : {}),
+        ...(data.publishDate ? { publishDate: new Date(data.publishDate) } : {}),
+        ...(data.status ? { status: data.status } : {}),
+        ...(data.category !== undefined ? { category: data.category } : {}), // ✅ allow null
+        ...(Array.isArray(data.tags) ? { tags: data.tags } : {}),
+        ...(data.featured !== undefined ? { featured: data.featured } : {}),
+        ...(data.metaTitle ? { metaTitle: data.metaTitle } : {}),
+        ...(data.metaDescription ? { metaDescription: data.metaDescription } : {}),
+        ...(Array.isArray(data.keywords) ? { keywords: data.keywords } : {}),
+        ...(Array.isArray(data.attachments) ? { attachments: data.attachments } : {}),
+        ...(data.authorId
+          ? { author: { connect: { id: data.authorId } } }
+          : {}),
       },
       include: { author: true },
     });
+
     return NextResponse.json(updatedBlog);
   } catch (error) {
     console.error("❌ Failed to update blog:", error);
@@ -51,7 +58,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-// DELETE blog
+// ✅ DELETE blog
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   const { id } = params;
 

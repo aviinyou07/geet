@@ -56,7 +56,7 @@ export default function EditBlogPage({ params }: BlogPageProps) {
       <div className="w-full max-w-4xl">
         <h1 className="text-3xl font-bold mb-6">Edit Blog</h1>
         <BlogForm
-          initialData={blog || undefined}
+          initialData={blog ?? undefined}
           onSubmit={handleSubmit}
           onClose={() => router.push("/admin/blogs")}
         />

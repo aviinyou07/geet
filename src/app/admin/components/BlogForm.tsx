@@ -4,15 +4,16 @@ import { useState, useEffect } from "react";
 import { Blog } from "../types";
 
 interface BlogFormProps {
-  initialData?: Partial<Blog>;
+  initialData?: Partial<Blog> | undefined;
   onSubmit: (data: Partial<Blog>) => Promise<void>;
   onClose: () => void;
 }
 
+
 export default function BlogForm({ initialData, onSubmit, onClose }: BlogFormProps) {
   const [form, setForm] = useState<Partial<Blog>>({
     title: "",
-    author: "",
+    author: { name: "" },
     content: "",
     image: "",
     status: "draft",
@@ -65,6 +66,7 @@ export default function BlogForm({ initialData, onSubmit, onClose }: BlogFormPro
       setImagePreview(initialData.image || "");
     }
   }, [initialData]);
+
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -133,12 +135,17 @@ export default function BlogForm({ initialData, onSubmit, onClose }: BlogFormPro
 
     const payload: Partial<Blog> = {
       ...form,
-      id: initialData?.id,
-      author: currentAdmin?.name,
-      authorId: currentAdmin?.id,
+      ...(initialData?.id && { id: initialData.id }),
+      ...(currentAdmin && {
+        author: {
+          id: currentAdmin.id,
+          name: currentAdmin.name,
+        }
+      }),
       keywords: (form.keywords || []).map(k => k.trim()).filter(Boolean),
       tags: (form.tags || []).map(t => t.trim()).filter(Boolean),
     };
+
 
     try {
       await onSubmit(payload);
@@ -162,18 +169,55 @@ export default function BlogForm({ initialData, onSubmit, onClose }: BlogFormPro
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
-            <InputField label="Title" value={form.title || ""} onChange={val => updateField("title", val)} required />
-            <InputField label="Author" value={form.author || ""} onChange={() => {}} readOnly required />
-            <TextareaField label="Short Description" value={form.excerpt || ""} onChange={val => updateField("excerpt", val)} />
-            <TextareaField label="Content" value={form.content || ""} onChange={val => updateField("content", val)} required />
-            <InputField label="Category" value={form.category || ""} onChange={val => updateField("category", val)} />
-            <InputField label="Slug" value={form.slug || ""} onChange={() => {}} readOnly />
+            <InputField
+              label="Title"
+              value={form.title || ""}
+              onChange={val => updateField("title", val)}
+              required
+            />
+
+            {/* Author field - readOnly */}
+            <InputField
+              label="Author"
+              value={form.author?.name || ""} // ✅ always a string
+              onChange={() => { }}
+              readOnly
+              required
+            />
+
+            <TextareaField
+              label="Short Description"
+              value={form.excerpt || ""}
+              onChange={val => updateField("excerpt", val)}
+            />
+
+            <TextareaField
+              label="Content"
+              value={form.content || ""}
+              onChange={val => updateField("content", val)}
+              required
+            />
+
+            <InputField
+              label="Category"
+              value={form.category || ""}
+              onChange={val => updateField("category", val)}
+            />
+            <InputField label="Slug" value={form.slug || ""} onChange={() => { }} readOnly />
             <SelectField label="Status" value={form.status || "draft"} onChange={val => updateField("status", val)} options={["draft", "published"]} />
 
             {/* Image */}
             <div>
               <label className="block mb-1 font-medium">Main Image</label>
-              <input type="file" accept="image/*" onChange={e => e.target.files && handleImageUpload(e.target.files[0])} disabled={uploadingImage} />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImageUpload(file);
+                }}
+                disabled={uploadingImage}
+              />
               {uploadingImage && <p>Uploading image...</p>}
               {imagePreview && (
                 <div className="flex items-center mt-2 space-x-2">
@@ -245,14 +289,30 @@ function InputField({ label, value, onChange, required = false, type = "text", r
   );
 }
 
-function TextareaField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function TextareaField({
+  label,
+  value,
+  onChange,
+  required = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  required?: boolean; // <-- add this
+}) {
   return (
     <div>
       <label className="block mb-1 font-medium">{label}</label>
-      <textarea value={value} onChange={e => onChange(e.target.value)} className="w-full border px-3 py-2 rounded h-20 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+      <textarea
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="w-full border px-3 py-2 rounded h-20 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        required={required} // <-- use it here
+      />
     </div>
   );
 }
+
 
 function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
   return (

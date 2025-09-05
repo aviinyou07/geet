@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import BlogForm from "../../components//BlogForm";
+import BlogForm from "../../components/BlogForm";
 import { Blog } from "../../types";
 
 export default function AddBlogPage() {
@@ -25,7 +25,7 @@ export default function AddBlogPage() {
     <div className="p-6 bg-gray-100 min-h-screen flex justify-center items-start">
       <div className="w-full max-w-4xl">
         <h1 className="text-3xl font-bold mb-6">Add Blog</h1>
-        <BlogForm initialData={undefined} onSubmit={handleSubmit} onClose={() => router.push("/admin/blogs")} />
+        <BlogForm onSubmit={handleSubmit} onClose={() => router.push("/admin/blogs")} />
       </div>
     </div>
   );

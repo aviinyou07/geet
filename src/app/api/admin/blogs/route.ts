@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/server/prisma";
+import type { Blog, Prisma } from "@/lib/generated/prisma";
 
 interface BlogBody {
   title: string;
@@ -9,7 +10,7 @@ interface BlogBody {
   image?: string;
   publishDate?: string;
   status?: "draft" | "published";
-  category?: string;
+  category?: string | null;
   tags?: string[];
   featured?: boolean;
   metaTitle?: string;
@@ -28,36 +29,40 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Title and content are required" }, { status: 400 });
     }
 
-    const slug =
+    // Generate base slug
+    let baseSlug =
       data.slug ||
       data.title.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-");
 
-    const createData: any = {
+    // Ensure slug uniqueness
+    let slug = baseSlug;
+    let counter = 1;
+    while (await prisma.blog.findUnique({ where: { slug } })) {
+      slug = `${baseSlug}-${counter++}`;
+    }
+
+    const createData: Prisma.BlogCreateInput = {
       title: data.title,
       slug,
-      excerpt: data.excerpt || "",
+      excerpt: data.excerpt ?? null,
       content: data.content,
-      image: data.image || "",
-      publishDate: data.publishDate ? new Date(data.publishDate) : new Date(),
-      status: data.status || "draft",
-      category: data.category || "",
-      tags: data.tags || [],
-      featured: data.featured || false,
-      metaTitle: data.metaTitle || "",
-      metaDescription: data.metaDescription || "",
-      keywords: data.keywords || [],
-      attachments: data.attachments || [],
+      image: data.image ?? null,
+      publishDate: data.publishDate ? new Date(data.publishDate) : null,
+      status: data.status ?? "draft",
+      category: data.category ?? null,
+      tags: data.tags ?? [],
+      featured: data.featured ?? false,
+      metaTitle: data.metaTitle ?? null,
+      metaDescription: data.metaDescription ?? null,
+      keywords: data.keywords ?? [],
+      attachments: data.attachments ?? [],
+      ...(data.authorId ? { author: { connect: { id: data.authorId } } } : {}),
     };
-
-    if (data.authorId) {
-      const user = await prisma.user.findUnique({ where: { id: data.authorId } });
-      if (user) createData.author = { connect: { id: data.authorId } };
-    }
 
     const newBlog = await prisma.blog.create({ data: createData });
     return NextResponse.json(newBlog);
   } catch (error) {
-    console.error("Failed to create blog:", error);
+    console.error("❌ Failed to create blog:", error);
     return NextResponse.json({ error: "Failed to create blog" }, { status: 500 });
   }
 }
@@ -65,54 +70,79 @@ export async function POST(req: Request) {
 // GET /api/admin/blogs
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url || "http://localhost");
-    const search = searchParams.get("search") || "";
+    const { searchParams } = new URL(req.url);
+
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const search = searchParams.get("search")?.trim();
 
-    console.log("🔍 Search:", search, "Page:", page, "Limit:", limit);
+    let blogs: Blog[];
+    let total: number;
 
-    const where = search
-      ? {
-          OR: [
-            { title: { contains: search, mode: "insensitive" } },
-            { excerpt: { contains: search, mode: "insensitive" } },
-            { content: { contains: search, mode: "insensitive" } },
-            { category: { contains: search, mode: "insensitive" } },
-            { tags: { has: search } },
-            { keywords: { has: search } },
-            { author: { is: { name: { contains: search, mode: "insensitive" } } } }
+    if (search) {
+      // Full-text search with ranking
+      blogs = await prisma.$queryRaw<Blog[]>`
+        SELECT *,
+          ts_rank(
+            to_tsvector('english',
+              coalesce("title", '') || ' ' ||
+              coalesce("excerpt", '') || ' ' ||
+              coalesce("content", '') || ' ' ||
+              coalesce("category", '') || ' ' ||
+              array_to_string("tags", ' ') || ' ' ||
+              array_to_string("keywords", ' ')
+            ),
+            plainto_tsquery('english', ${search})
+          ) AS rank
+        FROM "Blog"
+        WHERE to_tsvector('english',
+          coalesce("title", '') || ' ' ||
+          coalesce("excerpt", '') || ' ' ||
+          coalesce("content", '') || ' ' ||
+          coalesce("category", '') || ' ' ||
+          array_to_string("tags", ' ') || ' ' ||
+          array_to_string("keywords", ' ')
+        ) @@ plainto_tsquery('english', ${search})
+        ORDER BY rank DESC, "createdAt" DESC
+        LIMIT ${limit} OFFSET ${(page - 1) * limit};
+      `;
 
-          ],
-        }
-      : {};
+      // Count total matches
+      const countResult = await prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(*)::bigint as count FROM "Blog"
+        WHERE to_tsvector('english',
+          coalesce("title", '') || ' ' ||
+          coalesce("excerpt", '') || ' ' ||
+          coalesce("content", '') || ' ' ||
+          coalesce("category", '') || ' ' ||
+          array_to_string("tags", ' ') || ' ' ||
+          array_to_string("keywords", ' ')
+        ) @@ plainto_tsquery('english', ${search});
+      `;
 
-    const total = await prisma.blog.count({ where });
+      total = Number(countResult[0]?.count || 0);
+    } else {
+      // Normal pagination
+      total = await prisma.blog.count();
+      blogs = await prisma.blog.findMany({
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          author: { select: { id: true, name: true, email: true } },
+        },
+      });
 
-    const blogs = await prisma.blog.findMany({
-      where,
-      orderBy: { publishDate: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
-      include: {
-        author: { select: { id: true, name: true, email: true } },
-      },
-    });
+    }
 
     return NextResponse.json({
-      data: blogs.map(b => ({
-        ...b,
-        author: b.author?.name || "Unknown",
-      })),
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
+      total,
+      page,
+      limit,
+      blogs,
     });
   } catch (error) {
-    console.error("❌ Failed to fetch blogs:", error);
+    console.error("❌ Error fetching blogs:", error);
     return NextResponse.json({ error: "Failed to fetch blogs" }, { status: 500 });
   }
 }

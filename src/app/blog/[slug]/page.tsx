@@ -21,15 +21,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   if (!post) return notFound();
 
   // Fetch related posts (exclude current one)
-  const relatedPosts = await prisma.blog.findMany({
-    where: {
-      slug: { not: post.slug },
-      status: "published",
-      category: post.category ?? undefined,
-    },
-    orderBy: { publishDate: "desc" },
-    take: 3,
-  });
+const relatedPosts = await prisma.blog.findMany({
+  where: {
+    slug: { not: post.slug },
+    status: "published",
+    ...(post.category ? { category: post.category } : {}), 
+  },
+  orderBy: { publishDate: "desc" },
+  take: 3,
+});
+
 
   return (
     <div className="min-h-screen bg-background">

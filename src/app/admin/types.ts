@@ -1,8 +1,6 @@
 export interface Blog {
   id: string;
   title: string;
-  author: string;
-  authorId?: string;
   content: string;
   image?: string;
   status?: "draft" | "published";
@@ -18,4 +16,19 @@ export interface Blog {
   tags?: string[];
   createdAt: string;
   updatedAt?: string;
+
+  // Relations
+  authorId?: string;
+  author?: {
+    id?: string;
+    name: string;
+    email?: string;
+  } | null;
+}
+
+export interface BlogsApiResponse {
+  blogs: Blog[];
+  total: number;
+  page: number;
+  limit: number;
 }

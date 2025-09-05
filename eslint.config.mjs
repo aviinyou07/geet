@@ -1,15 +1,24 @@
 import { FlatCompat } from '@eslint/eslintrc'
- 
+import tseslint from 'typescript-eslint'
+
 const compat = new FlatCompat({
-  // import.meta.dirname is available after Node.js v20.11.0
   baseDirectory: import.meta.dirname,
 })
- 
+
 const eslintConfig = [
   ...compat.config({
     extends: ['next'],
     plugins: ['import'],
+    settings: {
+      'import/resolver': {
+        typescript: {
+          alwaysTryTypes: true,
+          project: './tsconfig.json', // 👈 makes aliases like @/ work
+        },
+      },
+    },
   }),
+  ...tseslint.configs.recommended, // optional but good for TS rules
   {
     rules: {
       'react/no-unescaped-entities': 'off',
@@ -17,6 +26,8 @@ const eslintConfig = [
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       'react-hooks/exhaustive-deps': 'off',
+
+      // import rules
       'import/no-unresolved': 'error',
       'import/named': 'error',
       'import/default': 'error',
@@ -29,5 +40,5 @@ const eslintConfig = [
     },
   },
 ]
- 
+
 export default eslintConfig
