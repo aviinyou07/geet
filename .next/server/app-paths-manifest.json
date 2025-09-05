@@ -1,0 +1,13 @@
+{
+  "/api/admin/me/route": "app/api/admin/me/route.js",
+  "/api/admin/profile/route": "app/api/admin/profile/route.js",
+  "/api/admin/password/route": "app/api/admin/password/route.js",
+  "/api/admin/stats/route": "app/api/admin/stats/route.js",
+  "/api/admin/logout/route": "app/api/admin/logout/route.js",
+  "/admin/dashboard/page": "app/admin/dashboard/page.js",
+  "/admin/blogs/page": "app/admin/blogs/page.js",
+  "/admin/blogs/add/page": "app/admin/blogs/add/page.js",
+  "/admin/blogs/[id]/page": "app/admin/blogs/[id]/page.js",
+  "/admin/settings/page": "app/admin/settings/page.js",
+  "/admin/login/page": "app/admin/login/page.js"
+}
