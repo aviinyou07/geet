@@ -1,5 +1,29 @@
-node_modules
-# Keep environment variables out of version control
+# Create .gitignore (or overwrite if exists)
+@"
+# Node modules
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Environment variables
 .env
 
-/generated/prisma
+# Prisma generated client
+prisma/generated/
+src/lib/generated/prisma/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor settings
+.vscode/
+.idea/
+"@ | Out-File -Encoding UTF8 .gitignore
