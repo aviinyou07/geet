@@ -56,8 +56,6 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
 
-  outputFileTracingRoot: path.resolve(__dirname, '../../'),
-
   generateBuildId: async () => `geetcare-${Date.now()}`,
 };
 
