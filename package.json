@@ -6,6 +6,7 @@
         "dev": "next dev",
         "postinstall": "prisma generate",
         "build": "next build --no-lint",
+        "start": "next start",
         "build:optimized": "npm run optimize:images && next build",
         "serve": "npx serve@latest out",
         "lint": "next lint --fix",

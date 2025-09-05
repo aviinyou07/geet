@@ -5,21 +5,17 @@ const nextConfig: NextConfig = {
   trailingSlash: true,
   skipTrailingSlashRedirect: true,
 
-  // Performance Optimizations
   experimental: {
-    serverActions: {}, // must be an object
+    serverActions: {}, // required object
   },
 
-  // External packages for server components
   serverExternalPackages: ['sharp', '@prisma/client', 'bcryptjs', 'jose'],
 
-  // Image Optimization - Static export configuration
   images: {
-    unoptimized: true, // Required for static export
+    unoptimized: true, // required if you want static export, but SSR is fine
   },
 
-  // Bundle Optimization
-  webpack: (config, { buildId, dev, isServer, defaultLoaders }) => {
+  webpack: (config, { isServer }) => {
     if (process.env.ANALYZE === 'true') {
       const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
       config.plugins.push(
@@ -31,6 +27,7 @@ const nextConfig: NextConfig = {
       );
     }
 
+    // Split vendor and common chunks
     config.optimization = {
       ...config.optimization,
       splitChunks: {
@@ -56,17 +53,12 @@ const nextConfig: NextConfig = {
     return config;
   },
 
-  // Security & Performance Headers
   poweredByHeader: false,
   compress: true,
 
-  // Output optimization
   outputFileTracingRoot: path.resolve(__dirname, '../../'),
 
-  // Generate build ID for better caching
-  generateBuildId: async () => {
-    return `geetcare-${Date.now()}`;
-  },
+  generateBuildId: async () => `geetcare-${Date.now()}`,
 };
 
 export default nextConfig;
