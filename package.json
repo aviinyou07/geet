@@ -4,6 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "next dev",
+        "postinstall": "prisma generate",
         "build": "next build --no-lint",
         "build:optimized": "npm run optimize:images && next build",
         "serve": "npx serve@latest out",
